@@ -10,21 +10,43 @@ exports.createRecord = async (req,res)=>{
 }
 
 exports.getRecords = async (req,res)=>{
+    const { type, category, startDate, endDate } = req.query
+
     const filter = {}
 
-    if(req.query.type) filter.type = req.query.type
-    if(req.query.category) filter.category = req.query.category
+    if(type){
+        filter.type = type
+    }
 
-    if(req.query.startDate && req.query.endDate){
-        filter.date = {
-            $gte:new Date(req.query.startDate),
-            $lte:new Date(req.query.endDate)
+    if(category){
+        filter.category = category
+    }
+
+    if(startDate || endDate){
+        filter.date = {}
+
+        if(startDate){
+            filter.date.$gte = new Date(startDate)
+        }
+
+        if(endDate){
+            filter.date.$lte = new Date(endDate)
         }
     }
 
-    const records = await Record.find(filter)
+    const records = await Record.find(filter).sort({ date:-1 })
 
     res.json(records)
+}
+
+exports.updateRecord = async (req,res)=>{
+    const record = await Record.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new:true }
+    )
+
+    res.json(record)
 }
 
 exports.updateRecord = async (req,res)=>{

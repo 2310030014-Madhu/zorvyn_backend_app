@@ -7,7 +7,7 @@ This project provides:
 - Role-based authorization (`viewer`, `analyst`, `admin`)
 - User management (admin-only)
 - Financial record CRUD
-- Dashboard summary analytics (income, expense, balance)
+- Advanced dashboard analytics (summary, category totals, monthly/weekly trends, recent activity)
 
 ## Tech Stack
 
@@ -260,7 +260,11 @@ Response:
 Optional query params:
 - `type` (`income` or `expense`)
 - `category` (string)
-- `startDate` + `endDate` (date range)
+- `startDate` (optional lower date bound)
+- `endDate` (optional upper date bound)
+
+Behavior:
+- Records are returned sorted by `date` in descending order (latest first)
 
 Examples:
 
@@ -268,6 +272,8 @@ Examples:
 GET /api/records?type=expense
 GET /api/records?category=Food
 GET /api/records?startDate=2026-01-01&endDate=2026-03-31
+GET /api/records?startDate=2026-01-01
+GET /api/records?endDate=2026-03-31
 ```
 
 Response:
@@ -314,6 +320,78 @@ Response:
 }
 ```
 
+### Get category summary
+
+- **GET** `/api/dashboard/category-summary`
+- Required roles: `analyst`, `admin`
+
+Response:
+
+```json
+[
+  { "_id": "Salary", "total": 20000 },
+  { "_id": "Food", "total": 4200 }
+]
+```
+
+Notes:
+- Aggregates total amount by category
+- Sorted by total descending
+
+### Get monthly trends
+
+- **GET** `/api/dashboard/monthly-trends`
+- Required roles: `analyst`, `admin`
+
+Response:
+
+```json
+[
+  {
+    "_id": { "year": 2026, "month": 1, "type": "income" },
+    "total": 10000
+  },
+  {
+    "_id": { "year": 2026, "month": 1, "type": "expense" },
+    "total": 3500
+  }
+]
+```
+
+Notes:
+- Groups totals by year, month, and record type
+
+### Get weekly trends
+
+- **GET** `/api/dashboard/weekly-trends`
+- Required roles: `analyst`, `admin`
+
+Response:
+
+```json
+[
+  {
+    "_id": { "year": 2026, "week": 14, "type": "income" },
+    "total": 2500
+  },
+  {
+    "_id": { "year": 2026, "week": 14, "type": "expense" },
+    "total": 1300
+  }
+]
+```
+
+Notes:
+- Groups totals by year, week number, and record type
+
+### Get recent activity
+
+- **GET** `/api/dashboard/recent`
+- Required roles: `analyst`, `admin`
+
+Response:
+- `200 OK` with last 5 created records (sorted by `createdAt` descending)
+
 ## Access Matrix
 
 | Endpoint | viewer | analyst | admin |
@@ -327,6 +405,10 @@ Response:
 | `PUT /api/records/:id` | No | No | Yes |
 | `DELETE /api/records/:id` | No | No | Yes |
 | `GET /api/dashboard/summary` | No | Yes | Yes |
+| `GET /api/dashboard/category-summary` | No | Yes | Yes |
+| `GET /api/dashboard/monthly-trends` | No | Yes | Yes |
+| `GET /api/dashboard/weekly-trends` | No | Yes | Yes |
+| `GET /api/dashboard/recent` | No | Yes | Yes |
 
 ## Common Error Responses
 
